@@ -1,0 +1,76 @@
+<div class="page-container">
+  <!-- Notifications -->
+  <div *ngIf="notification" class="notification-toast" [ngClass]="'toast-' + notification.type">
+    <div class="toast-content">
+      <svg *ngIf="notification.type === 'success'" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+        <path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"></path>
+        <polyline points="22 4 12 14.01 9 11.01"></polyline>
+      </svg>
+      <svg *ngIf="notification.type === 'error'" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+        <circle cx="12" cy="12" r="10"></circle>
+        <line x1="12" y1="8" x2="12" y2="12"></line>
+        <line x1="12" y1="16" x2="12.01" y2="16"></line>
+      </svg>
+      <svg *ngIf="notification.type === 'info'" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+        <circle cx="12" cy="12" r="10"></circle>
+        <line x1="12" y1="16" x2="12" y2="12"></line>
+        <line x1="12" y1="8" x2="12.01" y2="8"></line>
+      </svg>
+      <span>{{ notification.message }}</span>
+    </div>
+    <button type="button" class="toast-close" (click)="dismissNotification()">✕</button>
+  </div>
+
+  <!-- Error Connection Banner if API failed -->
+  <div *ngIf="error" class="banner-error">
+    <div class="banner-content">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+        <circle cx="12" cy="12" r="10"></circle>
+        <line x1="12" y1="8" x2="12" y2="12"></line>
+        <line x1="12" y1="16" x2="12.01" y2="16"></line>
+      </svg>
+      <div>
+        <strong>Connection Alert:</strong> {{ error }}
+      </div>
+    </div>
+    <button type="button" class="btn-retry" (click)="onRefresh()">Retry Connection</button>
+  </div>
+
+  <!-- Warehouse Metrics Overview -->
+  <app-metrics-overview
+    [stats]="stats"
+    (filterLowStock)="filterLowStock()"
+  ></app-metrics-overview>
+
+  <!-- Stock Data Table & Toolbar -->
+  <app-stock-list
+    [stocks]="stocks"
+    [loading]="loading"
+    (editStock)="openEditModal($event)"
+    (deleteStock)="promptDelete($event)"
+    (refresh)="onRefresh()"
+    (addStock)="openAddModal()"
+    (exportCsv)="onExportCsv($event)"
+    (exportPdf)="onExportPdf($event)"
+  ></app-stock-list>
+
+  <!-- Add / Edit Stock Modal Form -->
+  <app-stock-form-modal
+    [isOpen]="isFormModalOpen"
+    [stockToEdit]="selectedStockForEdit"
+    [saving]="saving"
+    (save)="onSaveStock($event)"
+    (cancel)="closeFormModal()"
+  ></app-stock-form-modal>
+
+  <!-- Confirm Delete Dialog -->
+  <app-confirm-dialog
+    [isOpen]="isConfirmDialogOpen"
+    title="Delete Stock Item"
+    [message]="deleteMessage"
+    confirmText="Delete Stock Item"
+    [danger]="true"
+    (confirmed)="confirmDelete()"
+    (cancelled)="cancelDelete()"
+  ></app-confirm-dialog>
+</div>

@@ -1,0 +1,566 @@
+<div class="cart-page-container">
+  <!-- Notifications Toast -->
+  <div *ngIf="notification" class="notification-toast" [ngClass]="'toast-' + notification.type">
+    <div class="toast-content">
+      <svg *ngIf="notification.type === 'success'" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+        <path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"></path>
+        <polyline points="22 4 12 14.01 9 11.01"></polyline>
+      </svg>
+      <svg *ngIf="notification.type === 'error'" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+        <circle cx="12" cy="12" r="10"></circle>
+        <line x1="12" y1="8" x2="12" y2="12"></line>
+        <line x1="12" y1="16" x2="12.01" y2="16"></line>
+      </svg>
+      <svg *ngIf="notification.type === 'info'" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+        <circle cx="12" cy="12" r="10"></circle>
+        <line x1="12" y1="16" x2="12" y2="12"></line>
+        <line x1="12" y1="8" x2="12.01" y2="8"></line>
+      </svg>
+      <span>{{ notification.message }}</span>
+    </div>
+    <button type="button" class="toast-close" (click)="notification = null">✕</button>
+  </div>
+
+  <!-- Connection Error Banner -->
+  <div *ngIf="error" class="banner-error">
+    <div class="banner-content">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+        <circle cx="12" cy="12" r="10"></circle>
+        <line x1="12" y1="8" x2="12" y2="12"></line>
+        <line x1="12" y1="16" x2="12.01" y2="16"></line>
+      </svg>
+      <div><strong>Connection Notice:</strong> {{ error }}</div>
+    </div>
+    <button type="button" class="btn-retry" (click)="refresh()">Retry</button>
+  </div>
+
+  <!-- Flipkart Style Cart Top Header -->
+  <div class="cart-top-bar">
+    <div class="cart-title-block">
+      <div class="cart-header-icon">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+          <circle cx="9" cy="21" r="1"></circle>
+          <circle cx="20" cy="21" r="1"></circle>
+          <path d="M1 1h4l2.68 13.39a2 2 0 0 0 2 1.61h9.72a2 2 0 0 0 2-1.61L23 6H6"></path>
+        </svg>
+      </div>
+      <div>
+        <h2 class="cart-main-heading">My Cart <span class="cart-count-badge">({{ cartItems.length }})</span></h2>
+        <span class="cart-subheading">Procurement &amp; Vendor Material Order Register</span>
+      </div>
+    </div>
+
+    <!-- Actions -->
+    <div class="cart-header-actions">
+      <button type="button" class="btn-cart-secondary" (click)="refresh()" [disabled]="loading" title="Refresh list">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" [class.spin]="loading">
+          <polyline points="23 4 23 10 17 10"></polyline>
+          <polyline points="1 20 1 14 7 14"></polyline>
+          <path d="M3.51 9a9 9 0 0 1 14.85-3.36L23 10M1 14l4.64 4.36A9 9 0 0 0 20.49 15"></path>
+        </svg>
+        <span>Refresh</span>
+      </button>
+
+      <button type="button" class="btn-cart-secondary" (click)="exportCsv()" [disabled]="cartItems.length === 0" title="Export to CSV">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+          <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path>
+          <polyline points="14 2 14 8 20 8"></polyline>
+          <line x1="16" y1="13" x2="8" y2="13"></line>
+          <line x1="16" y1="17" x2="8" y2="17"></line>
+          <polyline points="10 9 9 9 8 9"></polyline>
+        </svg>
+        <span>CSV</span>
+      </button>
+
+      <button type="button" class="btn-cart-secondary" (click)="exportPdf()" [disabled]="cartItems.length === 0" title="Export to PDF">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+          <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path>
+          <polyline points="14 2 14 8 20 8"></polyline>
+          <line x1="12" y1="18" x2="12" y2="12"></line>
+          <line x1="9" y1="15" x2="15" y2="15"></line>
+        </svg>
+        <span>PDF Report</span>
+      </button>
+
+      <button type="button" class="btn-cart-primary" (click)="openAddModal()">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+          <line x1="12" y1="5" x2="12" y2="19"></line>
+          <line x1="5" y1="12" x2="19" y2="12"></line>
+        </svg>
+        <span>+ Add to Cart</span>
+      </button>
+    </div>
+  </div>
+
+  <!-- Search & Filter Controls -->
+  <div class="cart-filter-bar">
+    <div class="search-box">
+      <svg class="search-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+        <circle cx="11" cy="11" r="8"></circle>
+        <line x1="21" y1="21" x2="16.65" y2="16.65"></line>
+      </svg>
+      <input
+        type="text"
+        [(ngModel)]="searchQuery"
+        placeholder="Search materials, site location, vendor or status..."
+        class="search-input"
+      />
+      <button *ngIf="searchQuery" class="clear-search" (click)="searchQuery = ''">✕</button>
+    </div>
+
+    <!-- Status Pills Filter -->
+    <div class="status-filter-group">
+      <button
+        type="button"
+        class="filter-pill"
+        [class.active]="statusFilter === 'ALL'"
+        (click)="statusFilter = 'ALL'"
+      >
+        All ({{ cartItems.length }})
+      </button>
+      <button
+        *ngFor="let opt of statusOptions"
+        type="button"
+        class="filter-pill"
+        [class.active]="statusFilter === opt"
+        (click)="statusFilter = opt"
+      >
+        {{ opt }}
+        <span *ngIf="stats.statusCounts[opt]" class="pill-count">
+          ({{ stats.statusCounts[opt] }})
+        </span>
+      </button>
+    </div>
+
+    <!-- View Mode Switch -->
+    <div class="view-switch">
+      <button
+        type="button"
+        class="view-btn"
+        [class.active]="viewMode === 'cards'"
+        (click)="viewMode = 'cards'"
+        title="Flipkart Cards View"
+      >
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+          <rect x="3" y="3" width="7" height="7"></rect>
+          <rect x="14" y="3" width="7" height="7"></rect>
+          <rect x="14" y="14" width="7" height="7"></rect>
+          <rect x="3" y="14" width="7" height="7"></rect>
+        </svg>
+      </button>
+      <button
+        type="button"
+        class="view-btn"
+        [class.active]="viewMode === 'table'"
+        (click)="viewMode = 'table'"
+        title="Table Grid View"
+      >
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+          <line x1="8" y1="6" x2="21" y2="6"></line>
+          <line x1="8" y1="12" x2="21" y2="12"></line>
+          <line x1="8" y1="18" x2="21" y2="18"></line>
+          <line x1="3" y1="6" x2="3.01" y2="6"></line>
+          <line x1="3" y1="12" x2="3.01" y2="12"></line>
+          <line x1="3" y1="18" x2="3.01" y2="18"></line>
+        </svg>
+      </button>
+    </div>
+  </div>
+
+  <!-- Main Flipkart 2-Column Section -->
+  <div class="cart-layout-grid">
+    <!-- Left Column: Items List -->
+    <div class="cart-items-column">
+      <!-- Empty State -->
+      <div *ngIf="filteredItems.length === 0" class="empty-cart-card">
+        <div class="empty-cart-icon">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
+            <circle cx="9" cy="21" r="1"></circle>
+            <circle cx="20" cy="21" r="1"></circle>
+            <path d="M1 1h4l2.68 13.39a2 2 0 0 0 2 1.61h9.72a2 2 0 0 0 2-1.61L23 6H6"></path>
+          </svg>
+        </div>
+        <h3>Your Cart is Empty!</h3>
+        <p>No materials found matching the current criteria. Add items to track vendor procurement and delivery status.</p>
+        <button type="button" class="btn-flipkart-action" (click)="openAddModal()">
+          + Add First Item
+        </button>
+      </div>
+
+      <!-- CARDS VIEW (Flipkart Style) -->
+      <div *ngIf="viewMode === 'cards' && filteredItems.length > 0" class="cart-cards-list">
+        <div *ngFor="let item of filteredItems" class="flipkart-cart-card">
+          <div class="card-main-content">
+            <!-- Material Avatar Thumbnail -->
+            <div class="material-thumb">
+              <div class="thumb-badge">
+                {{ (item.Materials || 'M').charAt(0).toUpperCase() }}
+              </div>
+            </div>
+
+            <!-- Item Information -->
+            <div class="item-info">
+              <div class="item-title-row">
+                <h3 class="material-name">{{ item.Materials }}</h3>
+                <span class="order-date-tag">
+                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <rect x="3" y="4" width="18" height="18" rx="2" ry="2"></rect>
+                    <line x1="16" y1="2" x2="16" y2="6"></line>
+                    <line x1="8" y1="2" x2="8" y2="6"></line>
+                    <line x1="3" y1="10" x2="21" y2="10"></line>
+                  </svg>
+                  {{ formatDate(item.Order_Date) }}
+                </span>
+              </div>
+
+              <!-- Location & Vendor Metadata -->
+              <div class="item-meta-row">
+                <span class="meta-tag site-tag">
+                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"></path>
+                    <circle cx="12" cy="10" r="3"></circle>
+                  </svg>
+                  <strong>Site:</strong> {{ item.Client_Site || 'Project Site' }}
+                </span>
+
+                <span class="meta-tag vendor-tag">
+                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"></path>
+                    <polyline points="9 22 9 12 15 12 15 22"></polyline>
+                  </svg>
+                  <strong>Vendor:</strong> {{ item.Vendor_Name || 'Direct Vendor' }}
+                </span>
+              </div>
+
+              <!-- Controls Row: Stepper & Status Selector -->
+              <div class="item-controls-row">
+                <!-- Flipkart Quantity Stepper -->
+                <div class="quantity-stepper">
+                  <button
+                    type="button"
+                    class="stepper-btn"
+                    (click)="updateQuantity(item, -1)"
+                    [disabled]="(item.Quantity || 1) <= 1"
+                    title="Decrease quantity"
+                  >-</button>
+                  <span class="stepper-val">{{ item.Quantity }}</span>
+                  <button
+                    type="button"
+                    class="stepper-btn"
+                    (click)="updateQuantity(item, 1)"
+                    title="Increase quantity"
+                  >+</button>
+                  <span class="unit-text">{{ item.Unit || 'Nos' }}</span>
+                </div>
+
+                <!-- Status Pill Dropdown -->
+                <div class="status-dropdown-wrapper">
+                  <span class="status-indicator-dot" [ngClass]="getStatusClass(item.Status)"></span>
+                  <select
+                    [ngModel]="item.Status"
+                    (ngModelChange)="onStatusChange(item, $event)"
+                    class="cart-status-select"
+                    [ngClass]="getStatusClass(item.Status)"
+                  >
+                    <option *ngFor="let opt of statusOptions" [value]="opt">{{ opt }}</option>
+                  </select>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <!-- Card Bottom Action Bar -->
+          <div class="card-bottom-actions">
+            <button type="button" class="btn-card-edit" (click)="openEditModal(item)">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"></path>
+                <path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"></path>
+              </svg>
+              <span>EDIT DETAILS</span>
+            </button>
+
+            <button type="button" class="btn-card-remove" (click)="promptDelete(item)">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <polyline points="3 6 5 6 21 6"></polyline>
+                <path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path>
+              </svg>
+              <span>REMOVE</span>
+            </button>
+          </div>
+        </div>
+      </div>
+
+      <!-- TABLE VIEW (Dense Data Grid) -->
+      <div *ngIf="viewMode === 'table' && filteredItems.length > 0" class="cart-table-card">
+        <table class="cart-table">
+          <thead>
+            <tr>
+              <th style="width: 50px;">S.No</th>
+              <th style="width: 110px;">Date</th>
+              <th>Material</th>
+              <th>Client / Project Site</th>
+              <th style="width: 100px;">Quantity</th>
+              <th>Vendor</th>
+              <th style="width: 170px;">Status</th>
+              <th style="width: 90px; text-align: center;">Actions</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr *ngFor="let item of filteredItems; let i = index">
+              <td class="text-center font-bold text-muted">{{ i + 1 }}</td>
+              <td>{{ formatDate(item.Order_Date) }}</td>
+              <td class="font-semibold text-dark">{{ item.Materials }}</td>
+              <td class="text-secondary">{{ item.Client_Site }}</td>
+              <td>
+                <div class="table-qty-stepper">
+                  <button type="button" class="t-step-btn" (click)="updateQuantity(item, -1)" [disabled]="(item.Quantity || 1) <= 1">-</button>
+                  <span class="t-step-val">{{ item.Quantity }}</span>
+                  <button type="button" class="t-step-btn" (click)="updateQuantity(item, 1)">+</button>
+                  <span class="t-step-unit">{{ item.Unit }}</span>
+                </div>
+              </td>
+              <td class="text-secondary">{{ item.Vendor_Name || '-' }}</td>
+              <td>
+                <select
+                  [ngModel]="item.Status"
+                  (ngModelChange)="onStatusChange(item, $event)"
+                  class="cart-status-select table-select"
+                  [ngClass]="getStatusClass(item.Status)"
+                >
+                  <option *ngFor="let opt of statusOptions" [value]="opt">{{ opt }}</option>
+                </select>
+              </td>
+              <td class="text-center">
+                <div class="row-actions">
+                  <button type="button" class="icon-btn edit-btn" (click)="openEditModal(item)" title="Edit item">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                      <path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"></path>
+                      <path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"></path>
+                    </svg>
+                  </button>
+                  <button type="button" class="icon-btn delete-btn" (click)="promptDelete(item)" title="Delete item">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                      <polyline points="3 6 5 6 21 6"></polyline>
+                      <path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path>
+                    </svg>
+                  </button>
+                </div>
+              </td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+
+    <!-- Right Column: Flipkart Style "PRICE DETAILS / ORDER SUMMARY" Sidebar -->
+    <div class="cart-summary-column">
+      <div class="flipkart-summary-card">
+        <h3 class="summary-card-title">ORDER SUMMARY</h3>
+        <div class="summary-divider"></div>
+
+        <div class="summary-row">
+          <span class="summary-label">Total Materials in Cart</span>
+          <span class="summary-value">{{ stats.totalItems }} items</span>
+        </div>
+
+        <div class="summary-row">
+          <span class="summary-label">Total Required Quantity</span>
+          <span class="summary-value">{{ stats.totalQuantity | number }} units</span>
+        </div>
+
+        <div class="summary-row">
+          <span class="summary-label">Active Project Sites</span>
+          <span class="summary-value">{{ stats.uniqueSites }} sites</span>
+        </div>
+
+        <div class="summary-row">
+          <span class="summary-label">Assigned Vendors</span>
+          <span class="summary-value">{{ stats.uniqueVendors }} vendors</span>
+        </div>
+
+        <div class="summary-divider"></div>
+
+        <!-- Pipeline Breakdown -->
+        <h4 class="pipeline-title">PROCUREMENT STAGES</h4>
+        <div class="pipeline-list">
+          <div class="pipeline-item">
+            <span class="pipeline-badge status-start"></span>
+            <span class="pipeline-name">Yet to Start</span>
+            <span class="pipeline-count">{{ stats.statusCounts['Yet to Start'] || 0 }}</span>
+          </div>
+
+          <div class="pipeline-item">
+            <span class="pipeline-badge status-vendor"></span>
+            <span class="pipeline-name">Requested Vendor</span>
+            <span class="pipeline-count">{{ stats.statusCounts['Requested Vendor'] || 0 }}</span>
+          </div>
+
+          <div class="pipeline-item">
+            <span class="pipeline-badge status-po"></span>
+            <span class="pipeline-name">PO Processed</span>
+            <span class="pipeline-count">{{ stats.statusCounts['PO Proccessed'] || 0 }}</span>
+          </div>
+
+          <div class="pipeline-item">
+            <span class="pipeline-badge status-payment"></span>
+            <span class="pipeline-name">Payment On Process</span>
+            <span class="pipeline-count">{{ stats.statusCounts['Payment On Process'] || 0 }}</span>
+          </div>
+
+          <div class="pipeline-item">
+            <span class="pipeline-badge status-porter"></span>
+            <span class="pipeline-name">Materials on Porter</span>
+            <span class="pipeline-count">{{ stats.statusCounts['Materials on Porter'] || 0 }}</span>
+          </div>
+
+          <div class="pipeline-item">
+            <span class="pipeline-badge status-dispatched"></span>
+            <span class="pipeline-name">Material Dispatched</span>
+            <span class="pipeline-count">{{ stats.statusCounts['Material dispatched'] || 0 }}</span>
+          </div>
+        </div>
+
+        <div class="summary-divider"></div>
+
+        <!-- Safe & Secure Trust Guarantee Banner -->
+        <div class="trust-guarantee-box">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"></path>
+          </svg>
+          <span>Verified Vendor Sourcing &bull; Live Porter Delivery Tracking</span>
+        </div>
+
+        <!-- Add Button in Sidebar -->
+        <button type="button" class="btn-sidebar-add" (click)="openAddModal()">
+          + ADD NEW MATERIAL TO CART
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- ADD / EDIT MODAL FORM -->
+  <div *ngIf="isModalOpen" class="modal-backdrop" (click)="closeModal()">
+    <div class="modal-dialog" (click)="$event.stopPropagation()">
+      <div class="modal-header">
+        <div class="modal-title-wrap">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <circle cx="9" cy="21" r="1"></circle>
+            <circle cx="20" cy="21" r="1"></circle>
+            <path d="M1 1h4l2.68 13.39a2 2 0 0 0 2 1.61h9.72a2 2 0 0 0 2-1.61L23 6H6"></path>
+          </svg>
+          <h3>{{ isEditing ? 'Edit Cart Item' : 'Add Material to Cart' }}</h3>
+        </div>
+        <button type="button" class="modal-close" (click)="closeModal()">✕</button>
+      </div>
+
+      <form (ngSubmit)="saveItem()" novalidate class="modal-body">
+        <div *ngIf="formError" class="form-error-alert">
+          {{ formError }}
+        </div>
+
+        <!-- Row 1: Order Date & Material -->
+        <div class="form-row">
+          <div class="form-group">
+            <label for="orderDate">Order Date *</label>
+            <input
+              id="orderDate"
+              type="date"
+              [(ngModel)]="formData.Order_Date"
+              name="orderDate"
+              required
+            />
+          </div>
+
+          <div class="form-group">
+            <label for="materialName">Material *</label>
+            <input
+              id="materialName"
+              type="text"
+              list="stockMaterialSuggestions"
+              [(ngModel)]="formData.Materials"
+              name="materialName"
+              placeholder="e.g. ACDB DCDB 5KW"
+              required
+            />
+            <datalist id="stockMaterialSuggestions">
+              <option *ngFor="let s of availableStocks" [value]="s.Materials"></option>
+            </datalist>
+          </div>
+        </div>
+
+        <!-- Row 2: Client Site -->
+        <div class="form-group">
+          <label for="clientSite">Client / Project Site Location *</label>
+          <input
+            id="clientSite"
+            type="text"
+            [(ngModel)]="formData.Client_Site"
+            name="clientSite"
+            placeholder="e.g. SP403: 5KW Mr. Prabhakar, Padapai, Chennai"
+            required
+          />
+        </div>
+
+        <!-- Row 3: Quantity, Unit, Vendor -->
+        <div class="form-row three-cols">
+          <div class="form-group">
+            <label for="cartQty">Quantity *</label>
+            <input
+              id="cartQty"
+              type="number"
+              min="1"
+              [(ngModel)]="formData.Quantity"
+              name="cartQty"
+              required
+            />
+          </div>
+
+          <div class="form-group">
+            <label for="cartUnit">Unit *</label>
+            <select id="cartUnit" [(ngModel)]="formData.Unit" name="cartUnit" required>
+              <option *ngFor="let u of commonUnits" [value]="u">{{ u }}</option>
+            </select>
+          </div>
+
+          <div class="form-group">
+            <label for="vendorName">Vendor Name</label>
+            <input
+              id="vendorName"
+              type="text"
+              [(ngModel)]="formData.Vendor_Name"
+              name="vendorName"
+              placeholder="e.g. Schneider Electric, Polycab"
+            />
+          </div>
+        </div>
+
+        <!-- Row 4: Status Stage -->
+        <div class="form-group">
+          <label for="cartStatus">Procurement Status *</label>
+          <select id="cartStatus" [(ngModel)]="formData.Status" name="cartStatus" required>
+            <option *ngFor="let opt of statusOptions" [value]="opt">{{ opt }}</option>
+          </select>
+        </div>
+
+        <!-- Modal Actions -->
+        <div class="modal-footer">
+          <button type="button" class="btn-modal-cancel" (click)="closeModal()">Cancel</button>
+          <button type="submit" class="btn-modal-save" [disabled]="saving">
+            {{ saving ? 'Saving...' : (isEditing ? 'Update Cart Item' : 'Add to Cart') }}
+          </button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <!-- CONFIRM DELETE DIALOG -->
+  <app-confirm-dialog
+    [isOpen]="isConfirmDialogOpen"
+    title="Remove from Cart"
+    [message]="deleteMessage"
+    confirmText="Remove Item"
+    [danger]="true"
+    (confirmed)="confirmDelete()"
+    (cancelled)="cancelDelete()"
+  ></app-confirm-dialog>
+</div>

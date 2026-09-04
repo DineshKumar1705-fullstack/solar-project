@@ -1,0 +1,124 @@
+.page-container {
+  max-width: 1400px;
+  margin: 0 auto;
+  padding: 24px;
+}
+
+/* Toast Notification */
+.notification-toast {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 12px 18px;
+  border-radius: 12px;
+  margin-bottom: 20px;
+  animation: slideInDown 0.25s ease-out;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
+}
+
+@keyframes slideInDown {
+  from { opacity: 0; transform: translateY(-10px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+.toast-content {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  font-size: 0.88rem;
+  font-weight: 600;
+}
+
+.toast-content svg {
+  width: 20px;
+  height: 20px;
+  flex-shrink: 0;
+}
+
+.toast-close {
+  background: transparent;
+  border: none;
+  font-size: 1rem;
+  cursor: pointer;
+  padding: 4px;
+  opacity: 0.7;
+}
+
+.toast-close:hover {
+  opacity: 1;
+}
+
+.toast-success {
+  background: #ecfdf5;
+  color: #065f46;
+  border: 1px solid #a7f3d0;
+}
+
+.toast-error {
+  background: #fef2f2;
+  color: #991b1b;
+  border: 1px solid #fecaca;
+}
+
+.toast-info {
+  background: #eff6ff;
+  color: #1e40af;
+  border: 1px solid #bfdbfe;
+}
+
+/* Connection error banner */
+.banner-error {
+  background: #fff7ed;
+  border: 1px solid #fed7aa;
+  border-radius: 12px;
+  padding: 14px 20px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  margin-bottom: 20px;
+}
+
+.banner-content {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  color: #9a3412;
+  font-size: 0.88rem;
+}
+
+.banner-content svg {
+  width: 22px;
+  height: 22px;
+  flex-shrink: 0;
+  color: #ea580c;
+}
+
+.btn-retry {
+  padding: 8px 16px;
+  background: #ea580c;
+  color: #ffffff;
+  border: none;
+  border-radius: 8px;
+  font-size: 0.82rem;
+  font-weight: 600;
+  cursor: pointer;
+  white-space: nowrap;
+}
+
+.btn-retry:hover {
+  background: #c2410c;
+}
+
+@media (max-width: 640px) {
+  .page-container {
+    padding: 16px;
+  }
+  .banner-error {
+    flex-direction: column;
+    align-items: flex-start;
+  }
+  .btn-retry {
+    width: 100%;
+  }
+}

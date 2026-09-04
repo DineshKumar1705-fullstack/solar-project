@@ -1,0 +1,541 @@
+<div class="indent-page-container">
+  <!-- Notifications -->
+  <div *ngIf="notification" class="notification-toast" [ngClass]="'toast-' + notification.type">
+    <div class="toast-content">
+      <svg *ngIf="notification.type === 'success'" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+        <path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"></path>
+        <polyline points="22 4 12 14.01 9 11.01"></polyline>
+      </svg>
+      <svg *ngIf="notification.type === 'error'" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+        <circle cx="12" cy="12" r="10"></circle>
+        <line x1="12" y1="8" x2="12" y2="12"></line>
+        <line x1="12" y1="16" x2="12.01" y2="16"></line>
+      </svg>
+      <svg *ngIf="notification.type === 'info'" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+        <circle cx="12" cy="12" r="10"></circle>
+        <line x1="12" y1="16" x2="12.01" y2="16"></line>
+      </svg>
+      <span>{{ notification.message }}</span>
+    </div>
+    <button type="button" class="toast-close" (click)="dismissNotification()">✕</button>
+  </div>
+
+  <!-- Error Connection Banner -->
+  <div *ngIf="error" class="banner-error">
+    <div class="banner-content">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+        <circle cx="12" cy="12" r="10"></circle>
+        <line x1="12" y1="8" x2="12" y2="12"></line>
+        <line x1="12" y1="16" x2="12.01" y2="16"></line>
+      </svg>
+      <div><strong>Connection Alert:</strong> {{ error }}</div>
+    </div>
+    <button type="button" class="btn-retry" (click)="onRefresh()">Retry</button>
+  </div>
+
+  <!-- KPI Summary Header Cards (3 Cards: Indents, Engineers, Status Breakdown) -->
+  <section class="kpi-grid three-cards">
+    <div class="kpi-card">
+      <div class="kpi-icon bg-emerald">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+          <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path>
+          <polyline points="14 2 14 8 20 8"></polyline>
+          <line x1="16" y1="13" x2="8" y2="13"></line>
+          <line x1="16" y1="17" x2="8" y2="17"></line>
+        </svg>
+      </div>
+      <div class="kpi-details">
+        <span class="kpi-label">TOTAL INDENTS</span>
+        <h3 class="kpi-value">{{ stats.totalIndents }}</h3>
+        <span class="kpi-sub">Raised requisition orders</span>
+      </div>
+    </div>
+
+    <div class="kpi-card">
+      <div class="kpi-icon bg-blue">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+          <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"></path>
+          <circle cx="12" cy="7" r="4"></circle>
+        </svg>
+      </div>
+      <div class="kpi-details">
+        <span class="kpi-label">SITE ENGINEERS</span>
+        <h3 class="kpi-value">{{ stats.uniqueEngineers }}</h3>
+        <span class="kpi-sub">Active site supervisors</span>
+      </div>
+    </div>
+
+    <div class="kpi-card">
+      <div class="kpi-icon bg-teal">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+          <path d="M21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16z"></path>
+        </svg>
+      </div>
+      <div class="kpi-details">
+        <span class="kpi-label">STATUS BREAKDOWN</span>
+        <div class="status-summary-pills">
+          <span class="pill-stat ready" title="Ready to Issue">{{ stats.readyCount }} Ready</span>
+          <span class="pill-stat vendor" title="Requested Vendor">{{ stats.vendorCount }} Vendor</span>
+          <span class="pill-stat pending" title="Pending">{{ stats.pendingCount }} Pending</span>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- Controls Toolbar -->
+  <div class="toolbar-section">
+    <div class="toolbar-top">
+      <!-- Search Input -->
+      <div class="search-box">
+        <svg class="search-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+          <circle cx="11" cy="11" r="8"></circle>
+          <line x1="21" y1="21" x2="16.65" y2="16.65"></line>
+        </svg>
+        <input
+          type="text"
+          [(ngModel)]="searchQuery"
+          placeholder="Search by Indent No, Material, Client, Engineer..."
+          aria-label="Search indents"
+        />
+        <button *ngIf="searchQuery" type="button" class="clear-btn" (click)="searchQuery = ''">✕</button>
+      </div>
+
+      <!-- Action Buttons -->
+      <div class="toolbar-actions">
+        <button type="button" class="tool-btn" (click)="onRefresh()" [disabled]="loading" title="Refresh data">
+          <svg [class.spin]="loading" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <polyline points="23 4 23 10 17 10"></polyline>
+            <polyline points="1 20 1 14 7 14"></polyline>
+            <path d="M3.51 9a9 9 0 0 1 14.85-3.36L23 10M1 14l4.64 4.36A9 9 0 0 0 20.49 15"></path>
+          </svg>
+          <span class="btn-text">Refresh</span>
+        </button>
+
+        <button type="button" class="tool-btn export-btn" (click)="onExportCsv()" [disabled]="indents.length === 0" title="Export Excel / CSV">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path>
+            <polyline points="7 10 12 15 17 10"></polyline>
+            <line x1="12" y1="15" x2="12" y2="3"></line>
+          </svg>
+          <span class="btn-text">Excel / CSV</span>
+        </button>
+
+        <button type="button" class="tool-btn pdf-btn" (click)="onExportPdf()" [disabled]="indents.length === 0" title="Export PDF report">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path>
+            <polyline points="14 2 14 8 20 8"></polyline>
+            <line x1="16" y1="13" x2="8" y2="13"></line>
+            <line x1="16" y1="17" x2="8" y2="17"></line>
+          </svg>
+          <span class="btn-text">PDF Report</span>
+        </button>
+
+        <button type="button" class="btn-new-indent" (click)="openAddModal()">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
+            <line x1="12" y1="5" x2="12" y2="19"></line>
+            <line x1="5" y1="12" x2="19" y2="12"></line>
+          </svg>
+          <span>New Indent</span>
+        </button>
+      </div>
+    </div>
+
+    <!-- Status filter chips -->
+    <div class="status-filter-bar">
+      <span class="filter-label">Filter Status:</span>
+      <button type="button" class="filter-chip" [class.active]="statusFilter === 'ALL'" (click)="statusFilter = 'ALL'">
+        All Indents ({{ indents.length }})
+      </button>
+      <button type="button" class="filter-chip chip-ready" [class.active]="statusFilter === 'Ready to Issue'" (click)="statusFilter = 'Ready to Issue'">
+        Ready to Issue
+      </button>
+      <button type="button" class="filter-chip chip-vendor" [class.active]="statusFilter === 'Requested Vendor'" (click)="statusFilter = 'Requested Vendor'">
+        Requested Vendor
+      </button>
+      <button type="button" class="filter-chip chip-pending" [class.active]="statusFilter === 'Pending'" (click)="statusFilter = 'Pending'">
+        Pending
+      </button>
+    </div>
+  </div>
+
+  <!-- Loading Bar -->
+  <div *ngIf="loading" class="loading-bar">
+    <div class="loading-progress"></div>
+  </div>
+
+  <!-- INDENT RECORDS SECTION -->
+  <section class="table-card">
+    <div class="table-card-head">
+      <div>
+        <h3 class="table-title">Indent Requisition Records</h3>
+        <span class="table-sub">
+          Showing {{ activeIndentsList.length }} record{{ activeIndentsList.length === 1 ? '' : 's' }}
+        </span>
+      </div>
+
+      <div class="details-head-actions">
+        <!-- View Switcher (Cards vs Table) -->
+        <div class="view-switch-group">
+          <button
+            type="button"
+            class="switch-btn"
+            [class.active]="detailViewMode === 'cards'"
+            (click)="detailViewMode = 'cards'"
+            title="Card View"
+          >
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <rect x="3" y="3" width="7" height="7"></rect>
+              <rect x="14" y="3" width="7" height="7"></rect>
+              <rect x="14" y="14" width="7" height="7"></rect>
+              <rect x="3" y="14" width="7" height="7"></rect>
+            </svg>
+            <span>Cards</span>
+          </button>
+          <button
+            type="button"
+            class="switch-btn"
+            [class.active]="detailViewMode === 'table'"
+            (click)="detailViewMode = 'table'"
+            title="Table View"
+          >
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <line x1="8" y1="6" x2="21" y2="6"></line>
+              <line x1="8" y1="12" x2="21" y2="12"></line>
+              <line x1="8" y1="18" x2="21" y2="18"></line>
+              <line x1="3" y1="6" x2="3.01" y2="6"></line>
+              <line x1="3" y1="12" x2="3.01" y2="12"></line>
+              <line x1="3" y1="18" x2="3.01" y2="18"></line>
+            </svg>
+            <span>Table</span>
+          </button>
+        </div>
+      </div>
+    </div>
+
+    <!-- 1. DETAIL CARDS VIEW -->
+    <div *ngIf="detailViewMode === 'cards'" class="detail-cards-container">
+      <!-- Empty State -->
+      <div *ngIf="activeIndentsList.length === 0 && !loading" class="empty-state-box">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
+          <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path>
+          <polyline points="14 2 14 8 20 8"></polyline>
+        </svg>
+        <h4>No Indent Records Found</h4>
+        <p>No indents match your active filters or search criteria.</p>
+        <button type="button" class="btn-new-indent" (click)="openAddModal()">
+          Create First Indent
+        </button>
+      </div>
+
+      <!-- Cards Grid -->
+      <div class="detail-cards-grid" *ngIf="activeIndentsList.length > 0">
+        <div *ngFor="let item of activeIndentsList" class="indent-detail-card">
+          <!-- Card Top Bar: Indent No, Date & Actions -->
+          <div class="detail-card-top">
+            <div class="detail-tags">
+              <span class="indent-no-tag">{{ item.Indent_No }}</span>
+              <span class="date-tag">{{ formatDate(item.Indent_Date) }}</span>
+            </div>
+            <div class="action-buttons">
+              <button type="button" class="icon-btn edit-btn" (click)="openEditModal(item)" title="Edit Indent">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                  <path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"></path>
+                  <path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"></path>
+                </svg>
+              </button>
+              <button type="button" class="icon-btn delete-btn" (click)="promptDelete(item)" title="Delete Indent">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                  <polyline points="3 6 5 6 21 6"></polyline>
+                  <path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path>
+                </svg>
+              </button>
+            </div>
+          </div>
+
+          <!-- Site Engineer Heading -->
+          <div class="detail-material-row">
+            <span class="detail-field-label">SITE ENGINEER</span>
+            <h4 class="detail-material-title engineer-title">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"></path>
+                <circle cx="12" cy="7" r="4"></circle>
+              </svg>
+              {{ item.Site_Engineer }}
+            </h4>
+          </div>
+
+          <!-- Client / Site Name -->
+          <div class="detail-info-grid">
+            <div class="detail-info-block full-width">
+              <span class="detail-field-label">CLIENT NAME</span>
+              <span class="detail-field-value">{{ item.Client_Name }}</span>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- 2. TABLE VIEW -->
+    <div *ngIf="detailViewMode === 'table'" class="table-responsive">
+      <table class="indent-table">
+        <thead>
+          <tr>
+            <th class="col-date">Indent Date</th>
+            <th class="col-no">Indent No</th>
+            <th class="col-engineer">Site Engineer</th>
+            <th class="col-client">Client Name</th>
+            <th class="col-actions">Actions</th>
+          </tr>
+        </thead>
+        <tbody>
+          <!-- Empty State -->
+          <tr *ngIf="activeIndentsList.length === 0 && !loading">
+            <td colspan="5" class="empty-cell">
+              <div class="empty-state">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
+                  <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path>
+                  <polyline points="14 2 14 8 20 8"></polyline>
+                </svg>
+                <h4>No Indent Records Found</h4>
+                <p>No indents match your active filters or search criteria.</p>
+                <button type="button" class="btn-new-indent" (click)="openAddModal()">
+                  Create First Indent
+                </button>
+              </div>
+            </td>
+          </tr>
+
+          <!-- Table Rows -->
+          <tr *ngFor="let item of activeIndentsList">
+            <td class="col-date">
+              <span class="date-tag">{{ formatDate(item.Indent_Date) }}</span>
+            </td>
+            <td class="col-no">
+              <span class="indent-no-tag">{{ item.Indent_No }}</span>
+            </td>
+            <td class="col-engineer">
+              <span class="engineer-tag">{{ item.Site_Engineer }}</span>
+            </td>
+            <td class="col-client">
+              {{ item.Client_Name }}
+            </td>
+            <td class="col-actions">
+              <div class="action-buttons">
+                <button type="button" class="icon-btn edit-btn" (click)="openEditModal(item)" title="Edit Indent">
+                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"></path>
+                    <path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"></path>
+                  </svg>
+                </button>
+                <button type="button" class="icon-btn delete-btn" (click)="promptDelete(item)" title="Delete Indent">
+                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <polyline points="3 6 5 6 21 6"></polyline>
+                    <path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path>
+                  </svg>
+                </button>
+              </div>
+            </td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+  </section>
+
+  <!-- ADD / EDIT MODAL -->
+  <div class="modal-backdrop" *ngIf="isModalOpen" (click)="$event.target === $event.currentTarget && closeModal()">
+    <div class="modal-dialog modal-dialog-wide">
+      <div class="modal-header">
+        <div>
+          <span class="modal-eyebrow">{{ isEditing ? 'UPDATE RECORD' : 'NEW REQUISITION' }}</span>
+          <h3 class="modal-title">{{ isEditing ? 'Edit Indent #' + formData.Indent_No : 'Create New Indent' }}</h3>
+        </div>
+        <button type="button" class="close-btn" (click)="closeModal()">✕</button>
+      </div>
+
+      <!-- Form Error Banner -->
+      <div *ngIf="formError" class="modal-error-banner">
+        <span>{{ formError }}</span>
+      </div>
+
+      <form (ngSubmit)="saveIndent()" novalidate class="modal-form">
+        <!-- Section 1: Order Details -->
+        <div class="form-section-card">
+          <h4 class="section-card-title">Indent Requisition Details</h4>
+          <!-- Row 1: Date & Indent No -->
+          <div class="form-row">
+            <div class="form-group">
+              <label for="indentDate">Indent Date *</label>
+              <input
+                id="indentDate"
+                type="date"
+                [(ngModel)]="formData.Indent_Date"
+                name="Indent_Date"
+                (click)="openDatePicker($event)"
+                (focus)="openDatePicker($event)"
+                required
+              />
+            </div>
+            <div class="form-group">
+              <label for="indentNo">Indent No *</label>
+              <input id="indentNo" type="text" [(ngModel)]="formData.Indent_No" name="Indent_No" placeholder="e.g. IN-001" required />
+            </div>
+          </div>
+
+          <!-- Row 2: Client Name & Site Engineer -->
+          <div class="form-row">
+            <div class="form-group">
+              <label for="siteEngineer">Site Engineer *</label>
+              <div class="select-wrapper">
+                <select id="siteEngineer" [(ngModel)]="formData.Site_Engineer" name="Site_Engineer" required>
+                  <option value="" disabled selected>-- Select Site Engineer --</option>
+                  <option *ngFor="let eng of availableEngineers" [value]="eng.Name">{{ eng.Name }}</option>
+                </select>
+              </div>
+            </div>
+            <div class="form-group">
+              <label for="clientName">Client Name *</label>
+              <input id="clientName" type="text" [(ngModel)]="formData.Client_Name" name="Client_Name" placeholder="Client / Project Site" required />
+            </div>
+          </div>
+        </div>
+
+        <!-- Section 2: Materials Selection -->
+        <div class="form-section-card materials-section-card">
+          <div class="section-card-header">
+            <div>
+              <h4 class="section-card-title">Requested Materials</h4>
+              <p class="section-card-subtitle">Select materials, quantity, unit, status, and PO/WO.</p>
+            </div>
+            <button type="button" class="btn-add-line-item" (click)="addMaterialItem()">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
+                <line x1="12" y1="5" x2="12" y2="19"></line>
+                <line x1="5" y1="12" x2="19" y2="12"></line>
+              </svg>
+              Add Material
+            </button>
+          </div>
+
+          <div class="line-items-table">
+            <div class="line-item-header">
+              <span class="col-header-mat">Material (from Stock) *</span>
+              <span class="col-header-qty">Quantity *</span>
+              <span class="col-header-unit">Unit *</span>
+              <span class="col-header-status">Status *</span>
+              <span class="col-header-powo">PO/WO</span>
+              <span class="col-header-del"></span>
+            </div>
+
+            <div
+              class="line-item-row"
+              *ngFor="let it of formData.items; let i = index"
+            >
+              <!-- 1. Material Selection -->
+              <div class="form-group item-col-mat">
+                <div class="select-wrapper">
+                  <select
+                    [(ngModel)]="it.Materials"
+                    [name]="'mat_' + i"
+                    (ngModelChange)="onItemMaterialChange(it, $event)"
+                    required
+                  >
+                    <option value="" disabled selected>-- Enter Material --</option>
+                    <option *ngFor="let s of availableStocks" [value]="s.Materials">{{ s.Materials }}</option>
+                  </select>
+                </div>
+              </div>
+
+              <!-- 2. Quantity -->
+              <div class="form-group item-col-qty">
+                <input
+                  type="number"
+                  min="1"
+                  [(ngModel)]="it.Quantity"
+                  [name]="'qty_' + i"
+                  placeholder="Qty"
+                  required
+                />
+              </div>
+
+              <!-- 3. Unit -->
+              <div class="form-group item-col-unit">
+                <div class="select-wrapper">
+                  <select [(ngModel)]="it.Unit" [name]="'unit_' + i" required>
+                    <option *ngFor="let u of commonUnits" [value]="u">{{ u }}</option>
+                  </select>
+                </div>
+              </div>
+
+              <!-- 4. Status Combo (Next to Unit) -->
+              <div class="form-group item-col-status">
+                <div class="select-wrapper">
+                  <select
+                    [(ngModel)]="it.Status"
+                    [name]="'status_' + i"
+                    class="item-status-select"
+                    [ngClass]="getStatusBadgeClass(it.Status)"
+                    required
+                  >
+                    <option *ngFor="let opt of statusOptions" [value]="opt">{{ opt }}</option>
+                  </select>
+                </div>
+              </div>
+
+              <!-- 5. PO/WO Toggle Button (Fully editable, click to toggle freely) -->
+              <div class="item-col-powo">
+                <button
+                  type="button"
+                  class="btn-powo-chip"
+                  [class.checked]="!!it.PO_WO"
+                  (click)="togglePoWo(it, $event)"
+                  title="Click to check or uncheck PO/WO"
+                >
+                  <span class="powo-box" [class.checked]="!!it.PO_WO">
+                    <svg *ngIf="it.PO_WO" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3.5">
+                      <polyline points="20 6 9 17 4 12"></polyline>
+                    </svg>
+                  </span>
+                  <span class="powo-text">PO/WO</span>
+                </button>
+              </div>
+
+              <!-- 6. Delete Option (Always available) -->
+              <div class="item-col-del">
+                <button
+                  type="button"
+                  class="btn-remove-line-item"
+                  (click)="removeMaterialItem(i)"
+                  [disabled]="(formData.items?.length || 0) <= 1"
+                  title="Delete Material Row"
+                >
+                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
+                    <line x1="18" y1="6" x2="6" y2="18"></line>
+                    <line x1="6" y1="6" x2="18" y2="18"></line>
+                  </svg>
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Actions -->
+        <div class="modal-footer">
+          <button type="button" class="btn-cancel" (click)="closeModal()" [disabled]="saving">Cancel</button>
+          <button type="button" class="btn-submit" (click)="saveIndent()" [disabled]="saving">
+            {{ saving ? 'Saving...' : (isEditing ? 'Save Changes' : 'Create Indent') }}
+          </button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <!-- Delete Confirm Dialog -->
+  <app-confirm-dialog
+    [isOpen]="isConfirmDialogOpen"
+    title="Delete Indent Record"
+    [message]="deleteConfirmationMessage"
+    confirmText="Delete Indent"
+    [danger]="true"
+    (confirmed)="confirmDelete()"
+    (cancelled)="cancelDelete()"
+  ></app-confirm-dialog>
+</div>

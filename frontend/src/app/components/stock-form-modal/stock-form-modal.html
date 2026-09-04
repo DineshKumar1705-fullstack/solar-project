@@ -1,0 +1,123 @@
+<div class="modal-backdrop" *ngIf="isOpen" (click)="onBackdropClick($event)">
+  <div class="modal-dialog" role="dialog" aria-modal="true">
+    <!-- Header -->
+    <div class="modal-header">
+      <div class="modal-title-wrap">
+        <span class="modal-eyebrow">{{ stockToEdit ? 'EDIT RECORD' : 'NEW INVENTORY ENTRY' }}</span>
+        <h3 class="modal-title">{{ stockToEdit ? 'Update Stock Item' : 'Add Stock to Warehouse' }}</h3>
+      </div>
+      <button type="button" class="close-btn" (click)="onClose()" aria-label="Close dialog">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+          <line x1="18" y1="6" x2="6" y2="18"></line>
+          <line x1="6" y1="6" x2="18" y2="18"></line>
+        </svg>
+      </button>
+    </div>
+
+    <!-- Error Banner -->
+    <div *ngIf="errorMessage" class="error-banner">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+        <circle cx="12" cy="12" r="10"></circle>
+        <line x1="12" y1="8" x2="12" y2="12"></line>
+        <line x1="12" y1="16" x2="12.01" y2="16"></line>
+      </svg>
+      <span>{{ errorMessage }}</span>
+    </div>
+
+    <!-- Form -->
+    <form (ngSubmit)="onSubmit()" class="modal-form">
+      <!-- Material Name -->
+      <div class="form-group">
+        <label for="materialName">
+          <span>Material / Item Name</span>
+          <span class="required-mark">*</span>
+        </label>
+        <input
+          id="materialName"
+          type="text"
+          [(ngModel)]="formData.Materials"
+          name="Materials"
+          placeholder="e.g. Solar Panel Waaree 610WP, Cable 4 Sqmm..."
+          required
+          autofocus
+        />
+      </div>
+
+      <!-- Description -->
+      <div class="form-group">
+        <label for="materialDesc">
+          <span>Specification / Description</span>
+          <span class="required-mark">*</span>
+        </label>
+        <textarea
+          id="materialDesc"
+          rows="2"
+          [(ngModel)]="formData.Descriptions"
+          name="Descriptions"
+          placeholder="Detailed specs, model, supplier notes or location..."
+          required
+        ></textarea>
+      </div>
+
+      <!-- Two column: Unit and Quantity -->
+      <div class="form-row">
+        <!-- Unit Selection -->
+        <div class="form-group">
+          <label for="materialUnit">
+            <span>Unit of Measurement</span>
+            <span class="required-mark">*</span>
+          </label>
+          <select
+            id="materialUnit"
+            [value]="isCustomUnit ? '__CUSTOM__' : formData.Unit"
+            (change)="onUnitSelectChange($event)"
+          >
+            <option *ngFor="let u of commonUnits" [value]="u">{{ u }}</option>
+            <option value="__CUSTOM__">+ Custom Unit...</option>
+          </select>
+
+          <!-- Custom Unit Input if selected -->
+          <input
+            *ngIf="isCustomUnit"
+            type="text"
+            class="custom-unit-input"
+            [ngModel]="customUnitValue"
+            (ngModelChange)="onCustomUnitInput($event)"
+            name="CustomUnit"
+            placeholder="Type custom unit (e.g. Pack, Drum)"
+            required
+          />
+        </div>
+
+        <!-- In-Stock Quantity -->
+        <div class="form-group">
+          <label for="materialQty">
+            <span>In-Stock W.H Quantity</span>
+            <span class="required-mark">*</span>
+          </label>
+          <input
+            id="materialQty"
+            type="number"
+            min="0"
+            step="1"
+            [(ngModel)]="formData.In_Stock"
+            name="In_Stock"
+            placeholder="0"
+            required
+          />
+        </div>
+      </div>
+
+      <!-- Footer Buttons -->
+      <div class="modal-footer">
+        <button type="button" class="btn-cancel" (click)="onClose()" [disabled]="saving">
+          Cancel
+        </button>
+        <button type="submit" class="btn-submit" [disabled]="saving">
+          <span *ngIf="!saving">{{ stockToEdit ? 'Save Changes' : 'Add to Register' }}</span>
+          <span *ngIf="saving">Saving...</span>
+        </button>
+      </div>
+    </form>
+  </div>
+</div>

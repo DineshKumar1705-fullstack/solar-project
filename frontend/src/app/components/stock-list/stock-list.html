@@ -1,0 +1,260 @@
+<div class="table-container">
+  <!-- Table Controls Toolbar -->
+  <div class="toolbar">
+    <div class="toolbar-left">
+      <!-- Search Input -->
+      <div class="search-box">
+        <svg class="search-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+          <circle cx="11" cy="11" r="8"></circle>
+          <line x1="21" y1="21" x2="16.65" y2="16.65"></line>
+        </svg>
+        <input
+          type="text"
+          [(ngModel)]="searchQuery"
+          placeholder="Search materials, descriptions, units..."
+          aria-label="Search stock register"
+        />
+        <button
+          *ngIf="searchQuery"
+          type="button"
+          class="clear-search-btn"
+          (click)="searchQuery = ''"
+          title="Clear search"
+        >
+          ✕
+        </button>
+      </div>
+
+      <!-- Unit Filter -->
+      <div class="select-wrapper">
+        <label for="unit-select" class="sr-only">Filter by Unit</label>
+        <select id="unit-select" [(ngModel)]="selectedUnit">
+          <option value="ALL">All Units ({{ stocks.length }})</option>
+          <option *ngFor="let u of availableUnits" [value]="u">{{ u }}</option>
+        </select>
+      </div>
+
+      <!-- Status Filter Chips -->
+      <div class="status-chips">
+        <button
+          type="button"
+          class="chip"
+          [class.active]="stockStatusFilter === 'ALL'"
+          (click)="stockStatusFilter = 'ALL'"
+        >
+          All
+        </button>
+        <button
+          type="button"
+          class="chip chip-ok"
+          [class.active]="stockStatusFilter === 'HEALTHY'"
+          (click)="stockStatusFilter = 'HEALTHY'"
+        >
+          In Stock
+        </button>
+        <button
+          type="button"
+          class="chip chip-low"
+          [class.active]="stockStatusFilter === 'LOW'"
+          (click)="stockStatusFilter = 'LOW'"
+        >
+          Low Stock (&lt;10)
+        </button>
+        <button
+          type="button"
+          class="chip chip-out"
+          [class.active]="stockStatusFilter === 'OUT'"
+          (click)="stockStatusFilter = 'OUT'"
+        >
+          Out of Stock
+        </button>
+      </div>
+    </div>
+
+    <!-- Toolbar Actions -->
+    <div class="toolbar-right">
+      <button
+        type="button"
+        class="tool-btn refresh-btn"
+        (click)="onRefresh()"
+        [disabled]="loading"
+        title="Refresh Inventory"
+      >
+        <svg [class.spin]="loading" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+          <polyline points="23 4 23 10 17 10"></polyline>
+          <polyline points="1 20 1 14 7 14"></polyline>
+          <path d="M3.51 9a9 9 0 0 1 14.85-3.36L23 10M1 14l4.64 4.36A9 9 0 0 0 20.49 15"></path>
+        </svg>
+        <span class="btn-text">Refresh</span>
+      </button>
+
+      <button
+        type="button"
+        class="tool-btn export-btn"
+        (click)="onExport()"
+        [disabled]="stocks.length === 0"
+        title="Export stock register to Excel / CSV"
+      >
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+          <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path>
+          <polyline points="7 10 12 15 17 10"></polyline>
+          <line x1="12" y1="15" x2="12" y2="3"></line>
+        </svg>
+        <span class="btn-text">Excel / CSV</span>
+      </button>
+
+      <button
+        type="button"
+        class="tool-btn pdf-btn"
+        (click)="onExportPdf()"
+        [disabled]="stocks.length === 0"
+        title="Export stock register to PDF report"
+      >
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+          <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path>
+          <polyline points="14 2 14 8 20 8"></polyline>
+          <line x1="16" y1="13" x2="8" y2="13"></line>
+          <line x1="16" y1="17" x2="8" y2="17"></line>
+          <polyline points="10 9 9 9 8 9"></polyline>
+        </svg>
+        <span class="btn-text">PDF Report</span>
+      </button>
+
+      <button
+        type="button"
+        class="tool-btn add-btn"
+        (click)="onAddStock()"
+      >
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
+          <line x1="12" y1="5" x2="12" y2="19"></line>
+          <line x1="5" y1="12" x2="19" y2="12"></line>
+        </svg>
+        <span class="btn-text">New Item</span>
+      </button>
+    </div>
+  </div>
+
+  <!-- Loading Bar -->
+  <div *ngIf="loading" class="loading-bar">
+    <div class="loading-progress"></div>
+  </div>
+
+  <!-- Stock Data Table -->
+  <div class="table-responsive">
+    <table class="stock-table">
+      <thead>
+        <tr>
+          <th class="th-sortable col-material" (click)="setSort('Materials')">
+            <span>Material / Item Name</span>
+            <span class="sort-indicator" *ngIf="sortBy === 'Materials'">{{ sortAsc ? '▲' : '▼' }}</span>
+          </th>
+          <th class="th-sortable col-desc" (click)="setSort('Descriptions')">
+            <span>Description</span>
+            <span class="sort-indicator" *ngIf="sortBy === 'Descriptions'">{{ sortAsc ? '▲' : '▼' }}</span>
+          </th>
+          <th class="th-sortable col-unit" (click)="setSort('Unit')">
+            <span>Unit</span>
+            <span class="sort-indicator" *ngIf="sortBy === 'Unit'">{{ sortAsc ? '▲' : '▼' }}</span>
+          </th>
+          <th class="th-sortable col-qty" (click)="setSort('In_Stock')">
+            <span>In-Stock W.H</span>
+            <span class="sort-indicator" *ngIf="sortBy === 'In_Stock'">{{ sortAsc ? '▲' : '▼' }}</span>
+          </th>
+          <th class="col-status">Status</th>
+          <th class="col-actions">Actions</th>
+        </tr>
+      </thead>
+      <tbody>
+        <!-- Empty State -->
+        <tr *ngIf="filteredStocks.length === 0 && !loading">
+          <td colspan="6" class="empty-cell">
+            <div class="empty-state">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
+                <path d="M20 7l-8-4-8 4m16 0l-8 4m8-4v10l-8 4m0-10L4 7m8 4v10M4 7v10l8 4"/>
+              </svg>
+              <h4>No inventory records found</h4>
+              <p *ngIf="searchQuery || selectedUnit !== 'ALL' || stockStatusFilter !== 'ALL'">
+                No stock matches your current search or filter criteria.
+              </p>
+              <p *ngIf="!searchQuery && selectedUnit === 'ALL' && stockStatusFilter === 'ALL'">
+                Your warehouse stock register is currently empty.
+              </p>
+              <div class="empty-actions">
+                <button
+                  *ngIf="searchQuery || selectedUnit !== 'ALL' || stockStatusFilter !== 'ALL'"
+                  type="button"
+                  class="btn-secondary"
+                  (click)="clearFilters()"
+                >
+                  Reset Filters
+                </button>
+                <button type="button" class="btn-primary" (click)="onAddStock()">
+                  Add First Item
+                </button>
+              </div>
+            </div>
+          </td>
+        </tr>
+
+        <!-- Stock Rows -->
+        <tr *ngFor="let stock of filteredStocks" [class.row-low-stock]="stock.In_Stock < 10">
+          <td class="col-material">
+            <div class="material-name">{{ stock.Materials }}</div>
+          </td>
+          <td class="col-desc">
+            <div class="material-desc" [title]="stock.Descriptions">{{ stock.Descriptions }}</div>
+          </td>
+          <td class="col-unit">
+            <span class="unit-tag">{{ stock.Unit }}</span>
+          </td>
+          <td class="col-qty">
+            <span class="qty-number">{{ stock.In_Stock | number }}</span>
+          </td>
+          <td class="col-status">
+            <span class="status-badge" [ngClass]="getStatusBadge(stock).cssClass">
+              <span class="badge-dot"></span>
+              {{ getStatusBadge(stock).text }}
+            </span>
+          </td>
+          <td class="col-actions">
+            <div class="action-buttons">
+              <button
+                type="button"
+                class="icon-action-btn edit-btn"
+                (click)="onEdit(stock)"
+                title="Edit stock details"
+                aria-label="Edit stock"
+              >
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                  <path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"></path>
+                  <path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"></path>
+                </svg>
+              </button>
+              <button
+                type="button"
+                class="icon-action-btn delete-btn"
+                (click)="onDelete(stock)"
+                title="Delete from register"
+                aria-label="Delete stock"
+              >
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                  <polyline points="3 6 5 6 21 6"></polyline>
+                  <path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path>
+                  <line x1="10" y1="11" x2="10" y2="17"></line>
+                  <line x1="14" y1="11" x2="14" y2="17"></line>
+                </svg>
+              </button>
+            </div>
+          </td>
+        </tr>
+      </tbody>
+    </table>
+  </div>
+
+  <!-- Table Footer / Count -->
+  <div class="table-footer">
+    <span class="showing-count">
+      Showing <strong>{{ filteredStocks.length }}</strong> of <strong>{{ stocks.length }}</strong> items
+    </span>
+  </div>
+</div>

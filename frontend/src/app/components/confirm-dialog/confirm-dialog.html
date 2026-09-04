@@ -1,0 +1,35 @@
+<div class="dialog-backdrop" *ngIf="isOpen" (click)="onBackdropClick($event)">
+  <div class="dialog-box" role="alertdialog" aria-modal="true">
+    <div class="dialog-icon" [class.danger]="danger">
+      <svg *ngIf="danger" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+        <circle cx="12" cy="12" r="10"></circle>
+        <line x1="12" y1="8" x2="12" y2="12"></line>
+        <line x1="12" y1="16" x2="12.01" y2="16"></line>
+      </svg>
+      <svg *ngIf="!danger" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+        <circle cx="12" cy="12" r="10"></circle>
+        <line x1="12" y1="16" x2="12" y2="12"></line>
+        <line x1="12" y1="8" x2="12.01" y2="8"></line>
+      </svg>
+    </div>
+
+    <div class="dialog-content">
+      <h3 class="dialog-title">{{ title }}</h3>
+      <p class="dialog-message">{{ message }}</p>
+    </div>
+
+    <div class="dialog-actions">
+      <button type="button" class="btn-cancel" (click)="onCancel()">
+        Cancel
+      </button>
+      <button
+        type="button"
+        class="btn-confirm"
+        [class.btn-danger]="danger"
+        (click)="onConfirm()"
+      >
+        {{ confirmText }}
+      </button>
+    </div>
+  </div>
+</div>
